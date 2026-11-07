@@ -1,0 +1,108 @@
+name: Build and Release Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build Dr. Drona Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: npm install
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Setup Capacitor and Android Platform
+        run: |
+          npm install --save @capacitor/core @capacitor/cli @capacitor/android
+          npx cap add android
+
+      - name: Configure Android Permissions and Audio Support
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            # Insert permissions if not already present
+            sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />' "$MANIFEST"
+          fi
+
+      - name: Build Android APK with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m"
+
+      - name: Prepare APK Asset
+        run: |
+          mkdir -p release-assets
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-assets/DrDrona-AI-Chess-v1.0.apk
+          ls -la release-assets/
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DrDrona-AI-Chess-APK
+          path: release-assets/DrDrona-AI-Chess-v1.0.apk
+          retention-days: 30
+
+      - name: Publish Android APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: success()
+        with:
+          tag_name: v1.0.0
+          name: "Dr. Drona AI Chess - Android APK (v1.0.0)"
+          body: |
+            ## ♟️ Dr. Drona: AI Voice Chess Coach & Engine (Android APK)
+            
+            Welcome to Dr. Drona AI Chess! You can now download and install the official native Android APK directly on your phone.
+            
+            ### 📱 Direct Download
+            Click below to download the APK file:
+            - **[DrDrona-AI-Chess-v1.0.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0/DrDrona-AI-Chess-v1.0.apk)**
+            
+            ---
+            ### ✨ Features Included:
+            - **Personal AI Chess Coach**: Guru Drona with authentic male voice instructions, tactical advice, and short contextual explanations.
+            - **Interactive Chessboard**: Tap-to-move, legal move highlights, last-move indicators, and captured pieces display.
+            - **Color Selection**: 1-Tap toggle to play as White or Black (with Drona opening with standard chess moves).
+            - **Tie & Repetition Detection**: Instant declaration of threefold repetition, stalemate, 50-move rule, and insufficient material.
+            - **Minimax Offline Engine**: 6 difficulty levels (Beginner ~500 to Master ~2200+ Elo) with humanized blunder curves.
+            - **Voice Mode Toggle**: 1-tap `[Voice ON]` / `[Voice OFF]` control during live gameplay.
+            - **Multi-Language Commentary**: English, Telugu, Hindi, Tamil, Kannada, Malayalam, Bengali, and Odia.
+            - **Training Arena & Tactical Puzzles**: Checkmate puzzles, opening repertoire explorer, and endgame techniques.
+            - **Post-Game Visual Analysis**: Accuracy percentage, blunder alerts, brilliant move highlights, and Drona's coaching takeaways.
+            
+            ---
+            ### 📥 Android Installation Instructions:
+            1. Download `DrDrona-AI-Chess-v1.0.apk` from the asset link below onto your Android device.
+            2. Open the downloaded file.
+            3. When prompted, allow **"Install from unknown sources"** for your browser or file manager.
+            4. Tap **Install** and launch **Dr. Drona AI Chess**!
+          draft: false
+          prerelease: false
+          files: release-assets/DrDrona-AI-Chess-v1.0.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

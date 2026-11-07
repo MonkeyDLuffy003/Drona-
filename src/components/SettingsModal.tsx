@@ -193,6 +193,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
           </div>
+
+          {/* Android APK Download Option */}
+          <div className="pt-2 border-t border-slate-800">
+            <a
+              href="https://github.com/MonkeyDLuffy003/Drona-/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-emerald-950/70 border border-emerald-500/40 hover:border-emerald-400 text-slate-100 flex items-center justify-between transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📱</span>
+                <div className="text-left">
+                  <div className="text-xs font-bold text-emerald-300">Download Android APK</div>
+                  <div className="text-[10px] text-slate-400">Install native app from GitHub</div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                v1.0.0
+              </span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
