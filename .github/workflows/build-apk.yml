@@ -28,24 +28,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Project Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build Web Application
         run: npm run build
 
       - name: Setup Capacitor and Android Platform
         run: |
-          npm install --save @capacitor/core @capacitor/cli @capacitor/android
+          npm install --save --legacy-peer-deps @capacitor/core @capacitor/cli @capacitor/android
           npx cap add android
+          npx cap sync android
 
       - name: Configure Android Permissions and Audio Support
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
-            # Insert permissions if not already present
             sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />' "$MANIFEST"
           fi
 
@@ -103,6 +102,7 @@ jobs:
             4. Tap **Install** and launch **Dr. Drona AI Chess**!
           draft: false
           prerelease: false
+          make_latest: true
           files: release-assets/DrDrona-AI-Chess-v1.0.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
